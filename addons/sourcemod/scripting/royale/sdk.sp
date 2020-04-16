@@ -4,6 +4,7 @@ static Handle g_DHookSetWinningTeam;
 static Handle g_DHookPrimaryAttack;
 static Handle g_DHookDeflectPlayer;
 static Handle g_DHookDeflectEntity;
+static Handle g_DHookVisibleInWeaponSelection;
 static Handle g_DHookExplode;
 static Handle g_DHookShouldCollide;
 
@@ -32,7 +33,6 @@ void SDK_Init()
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetPlayer", DHook_ValidTarget, _);
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetObject", DHook_ValidTarget, _);
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTarget, _);
-	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeapon, _);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
@@ -40,6 +40,7 @@ void SDK_Init()
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
 	g_DHookDeflectPlayer = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectPlayer");
 	g_DHookDeflectEntity = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectEntity");
+	g_DHookVisibleInWeaponSelection = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::VisibleInWeaponSelection");
 	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
 	g_DHookShouldCollide = DHook_CreateVirtual(gamedata, "CTFPointManager::ShouldCollide");
 	
@@ -209,6 +210,11 @@ void SDK_HookFlamethrower(int weapon)
 	DHookEntity(g_DHookDeflectEntity, true, weapon, _, DHook_DeflectPost);
 }
 
+void SDK_HookWeapon(int weapon)
+{
+	DHookEntity(g_DHookVisibleInWeaponSelection, false, weapon, _, DHook_VisibleInWeaponSelectionPre);
+}
+
 void SDK_HookProjectile(int projectile)
 {
 	DHookEntity(g_DHookExplode, false, projectile, _, DHook_ExplodePre);
@@ -280,45 +286,6 @@ public MRESReturn DHook_CouldHealTarget(int dispenser, Handle returnVal, Handle 
 	}
 	
 	return MRES_Ignored;
-}
-
-public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Handle params)
-{
-	int droppedWeapon = DHookGetParam(params, 1);
-	int defindex = GetEntProp(droppedWeapon, Prop_Send, "m_iItemDefinitionIndex");
-	TFClassType class = TF2_GetPlayerClass(client);
-	int slot = TF2_GetItemSlot(defindex, class);
-	
-	if (slot < 0)
-	{
-		DHookSetReturn(returnVal, false);
-		return MRES_Supercede;
-	}
-	
-	//Check if client already has weapon in given slot, remove and create dropped weapon if so
-	int weapon = TF2_GetItemInSlot(client, slot);
-	if (weapon > MaxClients)
-	{
-		if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
-			SDK_CreateDroppedWeapon(client, weapon);
-		
-		TF2_RemoveItemInSlot(client, slot);
-	}
-	
-	//Create new weapon
-	weapon = TF2_CreateWeapon(defindex, class);
-	if (weapon > MaxClients)
-	{
-		TF2_EquipWeapon(client, weapon);
-		TF2_RefillWeaponAmmo(client, weapon);
-	}
-	
-	//Delete dropped weapon
-	RemoveEntity(droppedWeapon);
-	
-	//Return false so game don't handle themself weapon pickups
-	DHookSetReturn(returnVal, false);
-	return MRES_Supercede;
 }
 
 public MRESReturn DHook_SetWinningTeam(Handle params)
@@ -396,6 +363,12 @@ public MRESReturn DHook_DeflectPost(int weapon, Handle params)
 {
 	//Change attacker team back to what it was, using flamethrower weapon team
 	TF2_ChangeTeam(DHookGetParam(params, 2), TF2_GetTeam(weapon));
+}
+
+public MRESReturn DHook_VisibleInWeaponSelectionPre(int entity, Handle returnVal)
+{
+	DHookSetReturn(returnVal, false);
+	return MRES_Supercede;
 }
 
 public MRESReturn DHook_ExplodePre(int entity, Handle params)

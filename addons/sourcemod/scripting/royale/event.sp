@@ -1,3 +1,17 @@
+int g_StockWeapons[][] =  {
+	{ -1, -1, -1, -1, -1, -1 },	//Unknown
+	{ 13, 23, 0, -1, -1, -1 },	//Scout
+	{ 14, 16, 3, -1, -1, -1 },	//Sniper
+	{ 18, 10, 6, -1, -1, -1 },	//Soldier
+	{ 19, 20, 1, -1, -1, -1 },	//Demoman
+	{ 17, 29, 8, -1, -1, -1 },	//Medic
+	{ 15, 11, 5, -1, -1, -1 },	//Heavy
+	{ 21, 12, 2, -1, -1, -1 },	//Pyro
+	{ 24, 735, 4, 27, 30, -1 },	//Spy
+	{ 9, 22, 7, 25, 26, 28 },	//Engineer
+};
+
+
 void Event_Init()
 {
 	HookEvent("teamplay_round_start", Event_RoundStart);
@@ -56,16 +70,28 @@ public Action Event_ArenaWinPanel(Event event, const char[] name, bool dontBroad
 public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
+	TFClassType class = TF2_GetPlayerClass(client);
 	
 	if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
 		return;
 	
-	//Create starting fists weapon
-	int weapon = TF2_CreateWeapon(INDEX_FISTS, _, g_fistsClassname[TF2_GetPlayerClass(client)]);
-	if (weapon > MaxClients)
+	//Create dummy stock weapons to allow weapon pickup
+	for (int slot = TFWeaponSlot_Primary; slot <= WeaponSlot_BuilderEngie; slot++)
 	{
-		TF2_EquipWeapon(client, weapon);
-		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+		int weapon = TF2_CreateWeapon(g_StockWeapons[class][slot], class);
+		if (weapon > MaxClients)
+		{
+			SDK_HookWeapon(weapon);
+			TF2_EquipWeapon(client, weapon);
+		}
+	}
+	
+	//Create starting fists weapon
+	int fists = TF2_CreateWeapon(INDEX_FISTS, _, g_fistsClassname[TF2_GetPlayerClass(client)]);
+	if (fists > MaxClients)
+	{
+		TF2_EquipWeapon(client, fists);
+		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", fists);
 	}
 	
 	//Create spellbook so spells can actually be created

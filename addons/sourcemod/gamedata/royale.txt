@@ -46,12 +46,6 @@
 				"linux"		"@_ZN16CTFDroppedWeapon17InitDroppedWeaponEP9CTFPlayerP13CTFWeaponBasebb"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x57\x8B\xF9\x8B\x4D\x08"
 			}
-			"CTFPlayer::CanPickupDroppedWeapon"
-			{
-				"library"	"server"
-				"linux"		"@_ZN9CTFPlayer22CanPickupDroppedWeaponEPK16CTFDroppedWeapon"
-				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x80\xBB\xDC\x04\x00\x00\x00"
-			}
 			"CTFPlayer::GetMaxAmmo"
 			{
 				"library"	"server"
@@ -96,6 +90,11 @@
 			{
 				"linux"		"420"
 				"windows"	"413"
+			}
+			"CBaseCombatWeapon::VisibleInWeaponSelection"
+			{
+				"linux"		"237"
+				"windows"	"231"
 			}
 			"CBaseGrenade::Explode"
 			{
@@ -203,20 +202,6 @@
 				"arguments"
 				{
 					"pTarget"
-					{
-						"type"	"cbaseentity"
-					}
-				}
-			}
-			"CTFPlayer::CanPickupDroppedWeapon"
-			{
-				"signature"	"CTFPlayer::CanPickupDroppedWeapon"
-				"callconv"	"thiscall"
-				"return"	"bool"
-				"this"		"entity"
-				"arguments"
-				{
-					"target"
 					{
 						"type"	"cbaseentity"
 					}
@@ -341,6 +326,13 @@
 						"flags"	"byref"
 					}
 				}
+			}
+			"CBaseCombatWeapon::VisibleInWeaponSelection"
+			{
+				"offset"	"CBaseCombatWeapon::VisibleInWeaponSelection"
+				"hooktype"	"entity"
+				"return"	"bool"
+				"this"		"entity"
 			}
 			"CBaseGrenade::Explode"
 			{
