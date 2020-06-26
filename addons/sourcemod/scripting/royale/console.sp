@@ -3,6 +3,7 @@ void Console_Init()
 	AddCommandListener(Console_JoinTeam, "jointeam");
 	AddCommandListener(Console_JoinTeam, "autoteam");
 	AddCommandListener(Console_JoinTeam, "spectate");
+	AddCommandListener(Console_Boo, "boo");
 	AddCommandListener(Console_Build, "build");
 	AddCommandListener(Console_Destroy, "destroy");
 	AddCommandListener(Console_VoiceMenu, "voicemenu");
@@ -37,6 +38,18 @@ public Action Console_JoinTeam(int client, const char[] command, int args)
 	ShowVGUIPanel(client, TF2_GetClientTeam(client) == TFTeam_Blue ? "class_blue" : "class_red");
 	
 	return Plugin_Handled;
+}
+
+public Action Console_Boo(int client, const char[] command, int args)
+{
+	//Client sends boo command inside of IN_ATTACK, so thats why it here instead
+	if (FRPlayer(client).PlayerState == PlayerState_BattleBus)
+	{
+		BattleBus_EjectClient(client);
+		return Plugin_Handled;
+	}
+	
+	return Plugin_Continue;
 }
 
 public Action Console_Build(int client, const char[] command, int args)

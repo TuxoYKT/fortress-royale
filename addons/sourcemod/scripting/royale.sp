@@ -375,6 +375,10 @@ public void OnMapStart()
 	BattleBus_Precache();
 	Zone_Precache();
 	
+	//Ghosts
+	PrecacheModel("models/props_halloween/ghost_no_hat.mdl");
+	PrecacheModel("models/props_halloween/ghost_no_hat_red.mdl");
+	PrecacheScriptSound("Halloween.GhostBoo");
 }
 
 public void OnLibraryAdded(const char[] sName)
@@ -420,14 +424,7 @@ public void OnClientDisconnect(int client)
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
-	if (FRPlayer(client).PlayerState == PlayerState_BattleBus)
-	{
-		if (buttons & IN_ATTACK3)
-			BattleBus_EjectClient(client);
-		else
-			buttons = 0;	//Don't allow client in battle bus process any other buttons
-	}
-	else if ((buttons & IN_ATTACK || buttons & IN_ATTACK2))
+	if ((buttons & IN_ATTACK || buttons & IN_ATTACK2))
 	{
 		if (FRPlayer(client).LastWeaponPickupTime < GetGameTime() - 1.0)
 			SDKCall_TryToPickupDroppedWeapon(client);
