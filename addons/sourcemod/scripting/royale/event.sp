@@ -10,12 +10,6 @@ void Event_Init()
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-	if (!g_WaitingForPlayers)
-	{
-		//Set back to false from TF2_OnWaitingForPlayersStart
-		GameRules_SetProp("m_bInWaitingForPlayers", false);
-	}
-	
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		FRPlayer(client).PlayerState = PlayerState_Waiting;
