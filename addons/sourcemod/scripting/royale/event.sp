@@ -20,7 +20,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	BattleBus_NewPos();	//Calculate pos from zone's restarted pos
 	Vehicles_SpawnVehiclesInWorld();
 	
-	TF2_CreateSetupTimer(10, EntOutput_SetupFinished);
+	g_RoundState = FRRoundState_NeedPlayers;
 }
 
 public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool dontBroadcast)
@@ -58,17 +58,13 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
 	
 	if (FRPlayer(client).PlayerState != PlayerState_Parachute)
 	{
-		//Latespawn, force set player as ghost
-		SetEntProp(client, Prop_Send, "m_lifeState", LIFE_DEAD);
-		TF2_ChangeClientTeam(client, TFTeam_Dead);
-		SetEntProp(client, Prop_Send, "m_lifeState", LIFE_ALIVE);
-		
-		TF2_AddCondition(client, TFCond_HalloweenGhostMode, TFCondDuration_Infinite);
+		//Latespawn, force set player as ghost in dead team
+		FRPlayer(client).ChangeTeam(TFTeam_Dead);
 		return;
 	}
 	
 	//Everyone shall go to HELL! (ghost on dead)
-	TF2_AddCondition(client, TFCond_HalloweenInHell);
+	TF2_AddCondition(client, TFCond_HalloweenInHell, TFCondDuration_Infinite);
 }
 
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
@@ -176,5 +172,5 @@ public Action Timer_SetClientDead(Handle timer, int serial)
 {
 	int client = GetClientFromSerial(serial);
 	if (0 < client <=  MaxClients && IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator && FRPlayer(client).PlayerState == PlayerState_Dead)
-		TF2_ChangeClientTeam(client, TFTeam_Dead);
+		FRPlayer(client).ChangeTeam(TFTeam_Dead);
 }
