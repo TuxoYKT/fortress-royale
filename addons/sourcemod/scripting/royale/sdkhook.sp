@@ -67,10 +67,11 @@ public void Building_SpawnPost(int building)
 
 public Action Client_SetTransmit(int entity, int client)
 {
-	//Don't allow teammates see invis spy
+	if (entity == client)
+		return Plugin_Continue;
 	
-	if (entity == client
-		 || !IsPlayerAlive(client)
+	//Can be seen by spectators or any visible cond
+	if (!IsPlayerAlive(client)
 		 || TF2_IsPlayerInCondition(entity, TFCond_Bleeding)
 		 || TF2_IsPlayerInCondition(entity, TFCond_Jarated)
 		 || TF2_IsPlayerInCondition(entity, TFCond_Milked)
@@ -80,8 +81,12 @@ public Action Client_SetTransmit(int entity, int client)
 		return Plugin_Continue;
 	}
 	
-	if (TF2_GetPercentInvisible(entity) >= 1.0)
-		return Plugin_Handled;
+	if (FRPlayer(client).IsAlive())
+	{
+		//Alive players cant see invis spy and ghost
+		if (TF2_GetPercentInvisible(entity) >= 1.0 || TF2_IsPlayerInCondition(entity, TFCond_HalloweenGhostMode))
+			return Plugin_Handled;
+	}
 	
 	return Plugin_Continue;
 }

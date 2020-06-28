@@ -18,6 +18,8 @@
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
 
 #define MODEL_EMPTY			"models/empty.mdl"
+#define MODEL_GHOST_BLU		"models/props_halloween/ghost_no_hat.mdl"
+#define MODEL_GHOST_RED		"models/props_halloween/ghost_no_hat_red.mdl"
 
 #define CONFIG_MAXCHAR		256
 
@@ -391,8 +393,8 @@ public void OnMapStart()
 	Zone_Precache();
 	
 	//Ghosts
-	PrecacheModel("models/props_halloween/ghost_no_hat.mdl");
-	PrecacheModel("models/props_halloween/ghost_no_hat_red.mdl");
+	PrecacheModel(MODEL_GHOST_BLU);
+	PrecacheModel(MODEL_GHOST_RED);
 	PrecacheScriptSound("Halloween.GhostBoo");
 }
 
