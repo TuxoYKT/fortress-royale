@@ -1,13 +1,14 @@
-#define ZONE_MODEL			"models/br/br_zone_gray_nonbezier.mdl"
+#define ZONE_MODEL			"models/br/br_zone_default_t2.mdl"
 #define ZONE_SHRINK_SOUND	"MVM.Siren"
-#define ZONE_DIAMETER	15000.0
-#define ZONE_DURATION	60.0
+#define ZONE_DIAMETER	16384
+#define ZONE_DURATION	10.0 // Duration of shrinking animations
 
 #define ZONE_FADE_START_RATIO	0.95
 #define ZONE_FADE_ALPHA_MAX		64
 
 enum struct ZoneConfig
 {
+	char model[PLATFORM_MAX_PATH];
 	int numShrinks;		/**< How many shrinks should be done */
 	float diameterMax;	/**< Starting zone size */
 	float diameterSafe; /**< center of the zone must always be inside this diameter of center of map */
@@ -15,6 +16,9 @@ enum struct ZoneConfig
 	
 	void ReadConfig(KeyValues kv)
 	{
+		kv.GetString("model", this.model, PLATFORM_MAX_PATH, ZONE_MODEL);
+		PrecacheModel(this.model);
+
 		this.numShrinks = kv.GetNum("numshrinks", this.numShrinks);
 		this.diameterMax = kv.GetFloat("diametermax", this.diameterMax);
 		this.diameterSafe = kv.GetFloat("diametersafe", this.diameterSafe);
@@ -34,6 +38,14 @@ static float g_ZonePropcenterNew[3];	//Where the zone will finish moving
 static float g_ZoneShrinkStart;			//GameTime where prop start shrinking
 static int g_ZoneShrinkLevel;		//Current shrink level, starting from ZoneConfig.numShrinks to 0
 
+static char modelAnimation[][] =  {
+	"shrink_05", 
+	"shrink_04", 
+	"shrink_03", 
+	"shrink_02", 
+    "shrink_01"
+};
+
 void Zone_ReadConfig(KeyValues kv)
 {
 	g_ZoneConfig.ReadConfig(kv);
@@ -43,15 +55,14 @@ void Zone_Precache()
 {
 	PrecacheScriptSound(ZONE_SHRINK_SOUND);
 	
-	AddFileToDownloadsTable("materials/models/br/br_zone_gray.vmt");
-	AddFileToDownloadsTable("materials/models/br/br_zone_gray.vtf");
-	AddFileToDownloadsTable("materials/models/br/invuln_gray.vtf");
+	AddFileToDownloadsTable("materials/models/br/zone_test/zone_gray.vmt");
+	AddFileToDownloadsTable("materials/models/br/zone_test/zone_gray.vtf");
 	
-	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.dx80.vtx");
-	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.dx90.vtx");
-	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.mdl");
-	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.sw.vtx");
-	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.vvd");
+	AddFileToDownloadsTable("models/br/br_zone_default_t1.dx80.vtx");
+	AddFileToDownloadsTable("models/br/br_zone_default_t1.dx90.vtx");
+	AddFileToDownloadsTable("models/br/br_zone_default_t1.mdl");
+	AddFileToDownloadsTable("models/br/br_zone_default_t1.sw.vtx");
+	AddFileToDownloadsTable("models/br/br_zone_default_t1.vvd");
 }
 
 void Zone_RoundStart()
@@ -59,17 +70,17 @@ void Zone_RoundStart()
 	delete g_ZonePropGhost;
 	g_ZonePropGhost = new ArrayList();
 	
-	g_ZoneTimer = null;
+    g_ZoneTimer = null;
 	g_ZoneShrinkLevel = g_ZoneConfig.numShrinks;
 	g_ZonePropcenterOld = g_ZoneConfig.center;
 	g_ZonePropcenterNew = g_ZoneConfig.center;
 	g_ZoneShrinkStart = 0.0;
-	
-	int zone = CreateEntityByName("prop_dynamic");
+
+    int zone = CreateEntityByName("prop_dynamic");
 	if (zone > MaxClients)
 	{
 		DispatchKeyValueVector(zone, "origin", g_ZonePropcenterOld);
-		DispatchKeyValue(zone, "model", ZONE_MODEL);
+		DispatchKeyValue(zone, "model", g_ZoneConfig.model);
 		DispatchKeyValue(zone, "disableshadows", "1");
 		
 		SetEntPropFloat(zone, Prop_Send, "m_flModelScale", g_ZoneConfig.diameterMax / ZONE_DIAMETER);
@@ -80,7 +91,7 @@ void Zone_RoundStart()
 		SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
 		SetEntityRenderColor(zone, 255, 0, 0, 255);
 		
-		SetVariantString("shrink");
+		SetVariantString("shrink_01");
 		AcceptEntityInput(zone, "SetAnimation");
 		
 		SetVariantFloat(0.0);
@@ -192,9 +203,12 @@ public Action Timer_StartShrink(Handle timer)
 	char message[256];
 	Format(message, sizeof(message), "%T", "Zone_ShrinkAlert", LANG_SERVER);
 	TF2_ShowGameMessage(message, "ico_notify_ten_seconds");
+
+    SetVariantString(modelAnimation[(g_ZoneShrinkLevel)]);
+	AcceptEntityInput(g_ZonePropRef, "SetAnimation");
 	
 	float duration = Zone_GetShrinkDuration();
-	SetVariantFloat(1.0 / (duration / (ZONE_DURATION / g_ZoneConfig.numShrinks)));
+	SetVariantFloat(1.0 / (duration / (ZONE_DURATION)));
 	AcceptEntityInput(g_ZonePropRef, "SetPlaybackRate");
 	
 	g_ZoneShrinkStart = GetGameTime();

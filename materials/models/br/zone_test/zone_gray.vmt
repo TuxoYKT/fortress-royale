@@ -7,4 +7,5 @@
 	$Additive 1
 	$overbrightfactor 15	
 	$depthblend 1
+	$nocull 1
 }
