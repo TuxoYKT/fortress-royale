@@ -8,7 +8,7 @@
 
 enum struct ZoneConfig
 {
-	char model[PLATFORM_MAX_PATH];
+	char model[PLATFORM_MAX_PATH]; // allow map makers to make own zone model
 	int numShrinks;		/**< How many shrinks should be done */
 	float diameterMax;	/**< Starting zone size */
 	float diameterSafe; /**< center of the zone must always be inside this diameter of center of map */
@@ -16,7 +16,7 @@ enum struct ZoneConfig
 	
 	void ReadConfig(KeyValues kv)
 	{
-		kv.GetString("model", this.model, PLATFORM_MAX_PATH, ZONE_MODEL);
+		kv.GetString("model", this.model, PLATFORM_MAX_PATH, ZONE_MODEL); 
 		PrecacheModel(this.model);
 
 		this.numShrinks = kv.GetNum("numshrinks", this.numShrinks);
@@ -38,13 +38,13 @@ static float g_ZonePropcenterNew[3];	//Where the zone will finish moving
 static float g_ZoneShrinkStart;			//GameTime where prop start shrinking
 static int g_ZoneShrinkLevel;		//Current shrink level, starting from ZoneConfig.numShrinks to 0
 
-static char modelAnimation[][] =  {
-	"shrink_05", 
-	"shrink_04", 
-	"shrink_03", 
+static char modelAnimation[][] =  { // list of sequences in the model
+	"shrink_01", 
 	"shrink_02", 
-    "shrink_01"
-};
+	"shrink_03", 
+	"shrink_04",
+	"shrink_05"
+}; 
 
 void Zone_ReadConfig(KeyValues kv)
 {
@@ -70,13 +70,13 @@ void Zone_RoundStart()
 	delete g_ZonePropGhost;
 	g_ZonePropGhost = new ArrayList();
 	
-    g_ZoneTimer = null;
+	g_ZoneTimer = null;
 	g_ZoneShrinkLevel = g_ZoneConfig.numShrinks;
 	g_ZonePropcenterOld = g_ZoneConfig.center;
 	g_ZonePropcenterNew = g_ZoneConfig.center;
 	g_ZoneShrinkStart = 0.0;
 
-    int zone = CreateEntityByName("prop_dynamic");
+	int zone = CreateEntityByName("prop_dynamic");
 	if (zone > MaxClients)
 	{
 		DispatchKeyValueVector(zone, "origin", g_ZonePropcenterOld);
@@ -120,10 +120,10 @@ void Zone_RoundStart()
 			SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
 			SetEntityRenderColor(zone, 0, 0, 0, 0);
 			
-			SetVariantString("shrink");
+			SetVariantString(modelAnimation[i]);
 			AcceptEntityInput(zone, "SetAnimation");
 			
-			SetVariantFloat((float(i) / float(g_ZoneConfig.numShrinks)) * ZONE_DURATION / 10.0);
+			SetVariantFloat(12); //force to end of the animation
 			AcceptEntityInput(zone, "SetPlaybackRate");
 			
 			int ref = EntIndexToEntRef(zone);
@@ -204,7 +204,7 @@ public Action Timer_StartShrink(Handle timer)
 	Format(message, sizeof(message), "%T", "Zone_ShrinkAlert", LANG_SERVER);
 	TF2_ShowGameMessage(message, "ico_notify_ten_seconds");
 
-    SetVariantString(modelAnimation[(g_ZoneShrinkLevel)]);
+	SetVariantString(modelAnimation[(g_ZoneConfig.numShrinks - g_ZoneShrinkLevel - 1)]);
 	AcceptEntityInput(g_ZonePropRef, "SetAnimation");
 	
 	float duration = Zone_GetShrinkDuration();
@@ -381,7 +381,7 @@ public Action Timer_Bleed(Handle timer)
 
 float Zone_GetCurrentDamage()
 {
-    return (float(g_ZoneConfig.numShrinks) - float(g_ZoneShrinkLevel)) / float(g_ZoneConfig.numShrinks) * 16.0;
+	return (float(g_ZoneConfig.numShrinks) - float(g_ZoneShrinkLevel)) / float(g_ZoneConfig.numShrinks) * 16.0;
 }
 
 void Zone_GetNewCenter(float center[3])
