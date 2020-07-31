@@ -1,0 +1,10 @@
+"UnlitGeneric"
+{
+	"$basetexture" "models\br\zone_test\zone_gray"
+	"$selfillum" 1
+	"$translucent" 1
+	// "$alphatest" 1
+	$Additive 1
+	$overbrightfactor 15	
+	$depthblend 1
+}
